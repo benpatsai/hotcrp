@@ -385,7 +385,10 @@ class PaperTable {
                         $name = '<span class="pavfn">' . htmlspecialchars($ov->option->name) . '</span>';
                         if ($ov->option->has_attachments())
                             $name .= "/" . htmlspecialchars($d->unique_filename);
-                        $pdfs[] = $d->link_html($name);
+                        if (($stamps = self::pdf_stamps_html($d)))
+                            $stamps = "<span class='sep'></span>" . $stamps;
+                        //$pdfs[] = $d->link_html($name, DocumentInfo::L_REQUIREFORMAT) . $stamps;
+                        $pdfs[] = $d->link_html($name) . $stamps;
                     }
                 }
 
@@ -1392,6 +1395,7 @@ class PaperTable {
     }
 
     private function papstrip_tag_float($tag, $kind, $type) {
+        global $Me;
         if (($totval = $this->prow->tag_value($tag)) === false)
             $totval = "";
         $reverse = $type !== "rank";
@@ -1401,10 +1405,19 @@ class PaperTable {
             $class .= " hottooltip";
             $extradiv = ' data-hottooltip-dir="h" data-hottooltip-content-promise="votereport(\'' . $tag . '\')"';
         }
+        if ($this->prow->has_tag("closed") || ($Me->roles & Contact::ROLE_CHAIR) || ($Me->roles & Contact::ROLE_ADMIN))
+            $votingResult = '<a class="qq" href="' . hoturl("search", "q=" . urlencode("show:#$tag sort:" . ($reverse ? "-" : "") . "#$tag")) . '">'
+                        . '<span class="is-tag-index" data-tag-base="' . $tag . '">' . $totval . '</span> ' . $kind .
+                        '</a>';
+        else
+            $votingResult = '';
         return '<div class="' . $class . '" style="display:' . ($totval ? "block" : "none")
             . '"' . $extradiv
-            . '><a class="qq" href="' . hoturl("search", "q=" . urlencode("show:#$tag sort:" . ($reverse ? "-" : "") . "#$tag")) . '">'
-            . '<span class="is-tag-index" data-tag-base="' . $tag . '">' . $totval . '</span> ' . $kind . '</a></div>';
+            . '>' . $votingResult .
+            //'<a class="qq" href="' . hoturl("search", "q=" . urlencode("show:#$tag sort:" . ($reverse ? "-" : "") . "#$tag")) . '">'
+            //. '<span class="is-tag-index" data-tag-base="' . $tag . '">' . $totval . '</span> ' . $kind .
+            //'</a>' .
+            '</div>';
     }
 
     private function papstrip_tag_entry_title($start, $tag, $value) {
@@ -1475,15 +1488,21 @@ class PaperTable {
         echo Ht::form_div("", array("id" => "{$id}form", "data-tag-base" => "~$tag", "onsubmit" => "return false"));
         if (isset($this->qreq->forceShow))
             echo Ht::hidden("forceShow", $this->qreq->forceShow);
+        if ($this->prow->has_tag("open")) {
+            $votingLabel =      Ht::checkbox("tagindex", "0", $myval !== "",
+                                          array("id" => "fold" . $id . "_d", "tabindex" => 1,
+                                                "onchange" => "save_tag_index(this)",
+                                                "class" => "is-tag-index",
+                                                "data-tag-base" => "~$tag",
+                                                "style" => "padding-left:0;margin-left:0;margin-top:0"))
+                                                . "&nbsp;" . Ht::label("#$tag vote");
+        } else {
+            $votingLabel = Ht::label("#$tag vote");
+        }
+
         echo $this->papt($id,
-                         Ht::checkbox("tagindex", "0", $myval !== "",
-                                      array("id" => "fold" . $id . "_d", "tabindex" => 1,
-                                            "onchange" => "save_tag_index(this)",
-                                            "class" => "is-tag-index",
-                                            "data-tag-base" => "~$tag",
-                                            "style" => "padding-left:0;margin-left:0;margin-top:0"))
-                         . "&nbsp;" . Ht::label("#$tag vote"),
-                         array("type" => "ps", "float" => $totmark)),
+                        $votingLabel,
+                        array("type" => "ps", "float" => $totmark)),
             "</div></form></div>\n\n";
     }
 
@@ -1617,11 +1636,13 @@ class PaperTable {
             $m .= Ht::xmsg("info", $t);
         else if ($has_author) {
             $override2 = ($this->admin ? " As an administrator, you can update the paper anyway." : "");
+            $override3 = (($Conf->setting('revision_open') && $prow->has_tag($Conf->setting_data('revision_tag')))?
+                            " **This paper is invited for revision. You can submit a revision below.**" : "");
             if ($this->mode === "edit") {
                 $t = "";
                 if ($Me->can_withdraw_paper($prow))
                     $t = " or withdraw it from consideration";
-                $m .= Ht::xmsg("info", "This paper is under review and can’t be changed, but you can change its contacts$t.$override2");
+                $m .= Ht::xmsg("info", "This paper is under review and can’t be changed, but you can change its contacts$t.$override2$override3");
             }
         } else if ($prow->outcome > 0 && !$Conf->timeAuthorViewDecision()
                    && $Conf->collectFinalPapers())
@@ -1681,6 +1702,9 @@ class PaperTable {
             else if ($Conf->timeFinalizePaper($prow))
                 $buttons[] = array(Ht::submit("update", $save_name, ["class" => "btn btn-savepaper"]));
         }
+        if ($prow && $prow->timeSubmitted > 0 && $Conf->setting('revision_open') &&
+            $prow->has_tag($Conf->setting_data('revision_tag')))
+            $buttons[] = array(Ht::submit("updateoptions", "Save revision", ["class" => "btn"]), "");
 
         // withdraw button
         if (!$prow || !$Me->can_withdraw_paper($prow, true))
@@ -1759,7 +1783,9 @@ class PaperTable {
         if (($prow->managerContactId || ($Me->privChair && $this->mode === "assign"))
             && $Me->can_view_paper_manager($prow))
             $this->papstripManager($Me->privChair);
-        $this->papstripTags();
+        if(!$prow->has_tag("open") || ($Me->roles & Contact::ROLE_ADMIN) || ($Me->roles & Contact::ROLE_CHAIR)) {
+            $this->papstripTags();
+        }
         $this->npapstrip_tag_entry = 0;
         foreach (TagInfo::defined_tags() as $ltag => $dt)
             if ($Me->can_change_tag($prow, "~$ltag", null, 0)) {
@@ -1970,6 +1996,16 @@ class PaperTable {
             echo $form;
             if ($prow->timeSubmitted > 0)
                 $this->echo_editable_contact_author(true);
+            //Revisions
+            if ($prow->timeSubmitted > 0 && $Conf->setting('revision_open') &&
+                $prow->has_tag($Conf->setting_data('revision_tag'))) {
+            foreach ($this->canUploadFinal ? PaperOption::option_list() : PaperOption::nonfinal_option_list() as $opt) {
+                    $ov = $prow->option($opt->id);
+                    //$ov = $ov ? : new PaperOptionValue($prow, $opt);
+                    $ov = new PaperOptionValue($prow, $opt);
+                    $opt->echo_editable_html($ov, $this->useRequest ? $this->qreq["opt$o->id"] : null, $this);
+                }
+            }
             $this->echoActions(false);
             echo "</form>";
         } else if (!$this->editable && $Me->act_author_view($prow) && !$Me->contactId) {

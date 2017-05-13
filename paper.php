@@ -341,6 +341,24 @@ if ($Qreq->updatecontacts && check_post($Qreq) && $prow) {
     $useRequest = true;
 }
 
+// poan: copy-paste the previous block and modify some
+if ($Qreq->updateoptions && check_post($Qreq) && $prow) {
+    if ($Me->can_administer($prow) || $Me->act_author_view($prow)) {
+        $ps = new PaperStatus($Me);
+        $opj = $ps->paper_json($prow);
+        $pj = PaperStatus::clone_json($opj);
+        PaperSaver::replace_options($Me, $pj, $Qreq);
+        if ($ps->save_paper_json($pj, $opj))
+            redirectSelf();
+        else
+            Conf::msg_error("<ul><li>" . join("</li><li>", $ps->messages()) . "</li></ul>");
+    } else
+        Conf::msg_error(whyNotText(array("permission" => 1), "update options for"));
+
+    // use request?
+    $useRequest = true;
+}
+
 
 // delete action
 if ($Qreq->delete && check_post()) {

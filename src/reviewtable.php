@@ -376,8 +376,14 @@ function reviewLinks($prow, $rrows, $crows, $rrow, $mode, &$allreviewslink) {
     // edit paper
     if ($mode !== "edit" && $prow->conflictType >= CONFLICT_AUTHOR
         && !$Me->can_administer($prow)) {
-        $x = '<a href="' . hoturl("paper", "p=$prow->paperId&amp;m=edit") . '" class="xx">'
-            . Ht::img("edit24.png", "[Edit paper]", "dlimg") . "&nbsp;<u><strong>Edit paper</strong></u></a>";
+        if ($prow->timeSubmitted > 0 && $Conf->setting('revision_open') &&
+            $prow->has_tag($Conf->setting_data('revision_tag'))) {
+            $x = '<a href="' . hoturl("paper", "p=$prow->paperId&amp;m=edit") . '" class="xx">'
+                . Ht::img("edit24.png", "[Edit]", "dlimg") . "&nbsp;<u><strong>Edit submission/Add revision</strong></u></a>";
+        } else {
+            $x = '<a href="' . hoturl("paper", "p=$prow->paperId&amp;m=edit") . '" class="xx">'
+                . Ht::img("edit24.png", "[Edit]", "dlimg") . "&nbsp;<u><strong>Edit submission</strong></u></a>";
+        }
         $t .= ($t === "" ? "" : $xsep) . $x;
     }
 

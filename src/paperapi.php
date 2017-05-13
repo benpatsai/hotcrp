@@ -135,8 +135,13 @@ class PaperApi {
         }
         $assigner = new AssignmentSet($user, $user->is_admin_force());
         $assigner->parse(join("\n", $x));
-        $error = join("<br />", $assigner->errors_html());
-        $ok = $assigner->execute();
+        if ($prow->has_tag("closed") && ((strpos($qreq->addtags, '_accept') !== false) | (strpos($qreq->addtags, '_reject') !== false))) {
+            $error = join("<br />", $assigner->error("Voting is closed."));
+            $ok = false;
+        } else {
+            $error = join("<br />", $assigner->errors_html());
+            $ok = $assigner->execute();
+        }
 
         // exit
         if ($ok && $prow) {

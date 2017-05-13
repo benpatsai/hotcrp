@@ -149,6 +149,12 @@ function render(SettingValues $sv) {
         "<p class=\"settingtext\">To collect <em>multiple</em> final versions, such as one in 9pt and one in 11pt, add “Alternate final version” options via <a href='", hoturl("settings", "group=opt"), "'>Settings &gt; Submission options</a>.</p>",
         "</div>\n\n";
     $Conf->footerScript("foldup(\$\$('cbfinal_open'),null,{f:\"c\"})");
+
+    // Revisions
+    echo "<h3 id=\"revisions\" class=\"settings g\">Revisions</h3>\n";
+    $sv->echo_checkbox('revision_open', '<b>Open site for revisions</b>');
+    $sv->echo_entry_row("revision_tag", "Tag used for revisions:   ");
+
 }
 
     function crosscheck(SettingValues $sv) {

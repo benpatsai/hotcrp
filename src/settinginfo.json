@@ -371,5 +371,14 @@
     "tracks": {
         "parser": "Track_SettingParser", "group": "tags",
         "type": "string"
+    },
+    "revision_open": {
+        "name": "Collect revisions",
+        "type": "checkbox"
+    },
+    "revision_tag": {
+        "name": "Tag for papers allowed to submit revisions",
+        "type": "string"
     }
+
 }

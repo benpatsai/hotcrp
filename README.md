@@ -1,3 +1,72 @@
+HotCRP with Revision Model and Anonymous Voting
+=================================
+
+This is the source code of the submission website for
+[MICRO-50](https://www.microarch.org/micro50/). As the submission co-chair,
+we'd like to share this code to future PC and/or submission chair interested in
+using the [revision model](https://www.microarch.org/micro50/Revision/) of
+[MICRO-50](https://www.microarch.org/micro50/).
+
+FAQ
+-------
+Please install HotCRP v2.100 and play with it before reading this section. The
+code is based on v2.100.
+
+* How's the code modified to enable revision?
+    We leverage the option field in the submission form to achieve this. We
+    were able to show only the option field to authors of some papers and let
+    them modify the option of their papers even the website is not open for
+    submissions.
+
+* How do I, as an admin/PC chair, let only some authors submit revisions?
+    1.  Under Settings->Decisions->Revisions, enter a tag (e.g., revision) you
+        want to use for papers that are allowed to submit revisions. Add this tag
+        to Settings->Tags & tracks->Chair-only tags. Save changes.
+    2.  Tag papers with the tag you defined based on your own criteria.
+    3.  **When the submission period has passed and you have closed the website**
+        Under Settings->Submission form->Submission options,
+        add an option (e.g. Revision), and enter your description.
+    4.  Select "PDF" for Type, "Visibility to PC and reviewers" for Visibility,
+        "1st" for Form order, " Near submission" for Display. Save changes.
+    5.  **When the conference is ready to accept revisions**, under
+        Settings->Decisions->Revisions, click "Open site for revisions."
+    6.  **When the period for revision period has ended**, under
+        Settings->Decisions->Revisions, unclick "Open site for revisions."
+
+    Note that you have to make sure that the 3rd step happens *after* your
+    close the website.  Otherwise, any author could submit a revision because
+    that is just an option of the paper.
+
+* Can opening/closing the website for revisions be automatic (i.e. I enter some
+        time stamp and it will work)?
+    No. The code does not support that. Neither does it has any coordination
+    with the original author response feature. Treat this as an extra feature
+    that lets you control the submission form.
+
+* How do I, as an admin/PC chair, use the modified, anonymous voting system?
+    1.  Under Settings->Tags & tracks->Approval voting tags,
+        enter exactly these two tags "_accept" & "_reject" (we hardcoded them in the source code).
+    2.  Under Settings->Tags & tracks->Chair-only tags,
+        add these two tags "open" & "closed" (we also hardcoded them in the source code).
+    3.  **When a paper is about to enter the voting session, use the tag "open" to tag it.**
+        As an admin/PC chair, you should be able to see the voting result to decide when
+        to finish the voting session (refresh when needed), while other people see only their vote.
+    4.  **When a paper has finished its voting session, use the tag "closed" to tag it and remove the tag "open" from it.**
+        Now if people refresh the paper page, they should be able to see the voting result.
+        If they don't refresh and change their votes, the "closed" tag prevents this by showing
+        a red cross to their changes.
+
+    Note that "_accept", "_reject", "open", "closed" are all hardcoded in the source code.
+    Therefore, be careful and type them right when using those tags.
+
+Authors
+-------
+Po-An Tsai (poantsai@csail.mit.edu) and Mark C. Jeffrey (mcj@csail.mit.edu)
+
+
+(Below is the original README.md in the original HotCRP github repo.)
+-------
+
 HotCRP Conference Review Software [![Build Status](https://travis-ci.org/kohler/hotcrp.svg?branch=master)](https://travis-ci.org/kohler/hotcrp)
 =================================
 

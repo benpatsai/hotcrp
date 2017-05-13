@@ -49,6 +49,21 @@ class PaperSaver {
                 $pj->contacts[] = (object) ["email" => $email, "name" => $name];
             }
     }
+
+    static public function replace_options(Contact $user, $pj, $qreq) {
+        // poan: copy-paste code from apply()
+        if (!isset($pj->options))
+            $pj->options = (object) [];
+        foreach (PaperOption::option_list() as $o)
+            if ($qreq["has_opt$o->id"]
+                && (!$o->final || $action === "final")) {
+                $okey = $o->abbr;
+                $pj->options->$okey = $o->parse_request(get($pj->options, $okey), $qreq, $user, $pj);
+            }
+        if (!count(get_object_vars($pj->options)))
+            unset($pj->options);
+    }
+
 }
 
 class Default_PaperSaver extends PaperSaver {

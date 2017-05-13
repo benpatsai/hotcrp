@@ -3245,7 +3245,12 @@ class Contact {
             return $data;
         } else if ($row->timeSubmitted <= 0 && $row->paperStorageId == 1)
             return array("pstat_noup", "No submission");
-        else if ($row->timeSubmitted > 0)
+        else if ($row && $row->timeSubmitted > 0 && $Conf->setting('revision_open')) {
+            if ($row->has_tag($Conf->setting_data('revision_tag')))
+                return array("pstat_sub", "Submitted, invited for revision");
+            else
+                return array("pstat_sub", "Submitted");
+        } else if ($row->timeSubmitted > 0)
             return array("pstat_sub", "Submitted");
         else
             return array("pstat_prog", "Not ready");
